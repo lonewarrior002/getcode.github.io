@@ -1,0 +1,1377 @@
+
+CASE QUERY
+
+    SELECT ReferralDriverInfo.Id,   
+    CASE  WHEN ReferralIdLevel1 = "'.$data['user_id'].'" AND ReferralIdLevel1Type = "'.$data['user_type'].'" THEN "Referral Level 1"
+            WHEN ReferralIdLevel2 = "'.$data['user_id'].'" AND ReferralIdLevel2Type = "'.$data['user_type'].'" THEN "Referral Level 2" 
+            ELSE "Not Available"  
+    END as business_builder
+    FROM ReferralDriverInfo
+
+========================================================================================================================================================================
+
+CHECK FOR NULL 
+
+    CASE WHEN image IS NOT NULL THEN image ELSE "assets/images/admin/card-2-icon.png" END AS filter_image
+
+    CASE WHEN video_url IS NOT NULL THEN video_url ELSE "" END AS video_url
+
+========================================================================================================================================================================
+
+DATE FORMAT & CAST
+
+    SELECT DATE_FORMAT(appointment_date, "%H:%i") as appointment_time,doctor_id FROM `book_appointment` where CAST(appointment_date as date) = "'.$request['appointment_date'].'" AND status NOT IN("pending","reject")
+
+    SELECT DATE_FORMAT(appointment_date, "%H:%i") as appointment_time,id FROM `book_appointment` where CAST(appointment_date as date) = "'.$request['appointment_date'].'" AND doctor_id = '.$request['doctor_id'].' AND status IN("accept","start","go_to_location
+
+    SELECT *,DATE_FORMAT(special_day_date, '%Y-%m-%d') as special_day FROM promocode WHERE promocode_for = 'advisor' AND status = 1 AND deleted_at IS NULL
+
+========================================================================================================================================================================
+
+RECORD BY AREA
+
+    SELECT u.id, CONCAT(u.first_name," ",u.last_name) as name, u.profile_picture, dsf.fee ,111.111 * DEGREES(ACOS(LEAST(1.0, COS(RADIANS(sl.latitude)) * COS(RADIANS('.$request['latitude'].')) * COS(RADIANS(sl.longitude - '.$request['longitude'].')) + SIN(RADIANS(sl.latitude)) * SIN(RADIANS('.$request['latitude'].'))))) AS distance FROM users as u INNER JOIN doctor_special_fields as dsf ON u.id = dsf.doctor_id INNER JOIN service_locations as sl ON u.id = sl.user_id WHERE u.deleted_at IS NULL AND u.active = '.STATUS_ACTIVE.' AND u.id IN ('.$ids.') '.$gender.' AND category_id = '.$request['category_id'].' GROUP BY u.id HAVING distance < 3.11 ORDER BY distance
+
+========================================================================================================================================================================
+
+RECORD WITH COUNT AND INTERVAL
+
+    SELECT users.email,CONCAT(users.first_name," ",users.last_name) as full_name,users.phone,users.gender,users.profile_picture,users.dob,users.full_address,users.country,users.level,users.latitude,users.longitude,
+    FLOOR((DATEDIFF(current_date(), STR_TO_DATE(users.dob, "%Y-%m-%d"))/365)) as age ,
+    (SELECT count(book_appointment.id) from book_appointment WHERE book_appointment.user_id = ' . $request['user_id'] . ' AND book_appointment.status != "reject") as total_visit_number,
+    (SELECT count(book_appointment.id) from book_appointment WHERE book_appointment.user_id = ' . $request['user_id'] . ' AND book_appointment.status = "complete") as expired_visit_number,
+    (SELECT count(book_appointment.id) from book_appointment WHERE book_appointment.user_id = ' . $request['user_id'] . ' AND (book_appointment.status = "accept" OR book_appointment.status = "start")) as current_visit_number,b.complaint,b.appointment_date,b.address_id,b.start_date,b.end_date,b.audio_url,b.referral_paper,b.medical_reports,b. analysis_reports,b.severity_of_pain,DATE_FORMAT(b.appointment_date, "%H:%i") as start_time,DATE_FORMAT(CAST(b.appointment_date AS TIME) + INTERVAL 1 HOUR,"%H:%i") as end_time,address.address,address.type
+    FROM book_appointment as b 
+    JOIN users on b.user_id = users.id 
+    LEFT JOIN address on b.address_id = address.id 
+    WHERE users.id = ' . $request['user_id'] . ' AND b.id=' . $request['booking_id'] . '
+
+========================================================================================================================================================================
+
+RECORD WITH TIME DIFFERENCE (IN SECOND)
+
+    SELECT CASE WHEN popup_end_time IS NULL THEN TIME_TO_SEC(TIMEDIFF('"+start_time+"',popup_start_time)) ELSE null END AS seconds,TIME_TO_SEC(TIMEDIFF(popup_end_time,popup_start_time)) diff FROM booking_request WHERE id = "+booking_id+"
+
+========================================================================================================================================================================
+
+RECORD WITH DAYS AGO (EX. GET RECORDS THAT ARE 15 DAYS AGO)
+
+    SELECT * FROM table WHERE DATE(booking_request.end_time) <= DATE_SUB(DATE(NOW()), INTERVAL 15 DAY)
+
+========================================================================================================================================================================
+
+RECORD WITH FIND IN SET   (id => search id , ids => list/set of ids)
+
+    SELECT id FROM conference WHERE FIND_IN_SET( id , ids )   
+
+========================================================================================================================================================================
+
+QUERY WITH PAGINATION & LIMIT
+
+    if($request['page'] == 0)
+    {
+        $request['page'] = 1;
+    }
+
+    if($request['page'] == 1)
+    {
+        $start = 0;
+    }
+    else
+    {
+        $start = ($request['page'] - 1) * $this->config->item('page_item');;
+    }
+    $limit = 10; // Per Page Item limit
+
+    SELECT * FROM table WHERE id = 1 DESC LIMIT '.$start.','.$limit.'
+
+========================================================================================================================================================================
+
+CODEIGNITER QUERY WITH PAGINATION
+
+    $this->db->select('*')->from('advisor_amount_log')
+        ->where('advisor_amount_log.advisor_id',$request['advisor_id'])
+        ->order_by('booking_request.id','desc')
+        ->limit($limit, $start)
+        ->get()->result_array();
+
+========================================================================================================================================================================
+
+CODEIGNITER CASE QUERY ( MULTI GROUP )
+
+    $session_report->select('booking_request.*,advisor.full_name as advisor_name,customer.full_name as customer_name,category.name as category_name',false)
+                    ->from('booking_request')
+                    ->join('users as advisor','booking_request.advisor_id = advisor.id')
+                    ->join('users as customer','booking_request.user_id = customer.id')
+                    ->join('category', 'booking_request.category_id = category.id')
+                    ->group_start()
+                        ->group_start()
+                            ->where('booking_request.status','1')
+                            ->where('booking_request.end_time IS NOT NULL')
+                            ->where('booking_request.is_session_running','1')
+                            ->where($where)
+                        ->group_end()
+                        ->or_group_start()
+                            ->where('booking_request.status','2')
+                            ->where('booking_request.is_session_running','1')
+                            ->where($where)
+                        ->group_end()
+                    ->group_end()
+                    // ->where($where)
+                    ->order_by('booking_request.id','DESC');
+
+========================================================================================================================================================================
+
+CODEIGNITER DATATABLE GET TOTAL SUM OF COLUMN VALUE
+
+    CSS -   #table_id tfoot tr th{border-left: none; border-bottom: none; border-right: none;}
+
+        // number of th tag should be same as number of column
+    JS  -   $("#booking_request").append(
+                $('<tfoot class="orders_footer"/>').append('<tr><th></th><th></th><th></th><th></th><th></th><th></th><th></th><th></th><th></th><th></th></tr>');
+            );
+
+    CONTROLLER CODE - ( put beloew code before $custom_variable_name->set_options() )
+
+    $set_options = "function ( row, data, start, end, display ) {
+                        var api = this.api(), data;
+                        // console.log(data);
+                        // computing column Total of the rate result 
+                        var Amount_total = api  // start
+                            .column( 6 , { page: 'current'} )  // specify column number that you want to be total
+                            .data()
+                            .reduce( function (a, b) {
+                                var a = parseFloat(a) || 0;
+                                var b = parseFloat(b) || 0;
+                                return a + b;
+                            }, 0 );
+                        $( api.column( 6 ).footer() ).html('Total = $'+Amount_total.toFixed(2)); // end
+                    }";
+
+    // for multiple just copy code from //start to //end and paste after //end.
+
+FOR JQUERY DATATABLE
+
+    //put this html after <tbody> tag
+
+        <tfoot class="orders_footer"><tr><th></th><th></th><th></th><th></th><th></th><th></th><th></th></tr></tfoot>
+
+    JS - // put this js code in $(#table_id)..DataTable({});
+
+    footerCallback: function ( row, data, start, end, display ) {
+                        var api = this.api(), data;
+                        // console.log(data);
+                        // computing column Total of the rate result 
+                        var Amount_total = api
+                            .column( 3 , { page: 'current'} )
+                            .data()
+                            .reduce( function (a, b) {
+                                var a = parseFloat(a) || 0;
+                                var b = parseFloat(b) || 0;
+                                return a + b;
+                            }, 0 );
+                        
+                        $( api.column( 3 ).footer() ).html('Total = $'+Amount_total.toFixed(2));
+                        
+                    },
+
+========================================================================================================================================================================
+
+DATATABLE FILTER
+
+            // put this div before datatable div
+    HTML -  <div class="filter_div d-none">
+                <div class="row">
+                    <div class="col-12 form-group w-100" style="display: flex; ">
+                        // code for filter (ex. dropdown/radio button)
+                        <?php if($customer_variable) {
+                            echo '<label class="btn btn-secondary text-white clear_filter">Clear Filter</label>';
+                        } ?>
+                    </div>
+                </div>
+            </div>
+
+    JS - // put this js code in document.ready
+        $('.export_record_div').append($('.filter_div'));
+        $('.filter_div').removeClass('d-none'); 
+
+        //for search
+        .on('click', '.search_filter', ()=> {
+            //get specific filter data 
+            //ex. var status_filter = $.trim($('#status_filter').val());
+            if(status_filter != ''){
+                location.href = BASE_URL+"admin/service-provider/"+status_filter;
+            }
+        })
+        // for clear the filter and get main data
+        .on('click', '.clear_filter', ()=> {
+            location.href = BASE_URL+"admin/service-provider/";
+        });
+
+========================================================================================================================================================================
+
+PAGINATION IN ARRAY
+
+    if($request['page'] == 0)
+    {
+        $request['page'] = 1;
+    }
+    $limit = 10; // Per Page Item limit
+    $offset = $limit * ($request['page'] - 1);
+    $sorted_array = array_slice($sorted_array, $offset, $limit);
+
+========================================================================================================================================================================
+
+ARRAY SORT BY SPECIFIC ORDER (using usort)
+
+    $row = unsorted array
+    $ratings_sorted = array from which $row will be sorted 
+    $a['avg_rating']/$b['avg_rating'] = specific column/value which you want to be sorted
+
+    usort($row, function ($a, $b) use ($ratings_sorted) {
+        $pos_a = array_search($a['avg_rating'], $ratings_sorted);
+        $pos_b = array_search($b['avg_rating'], $ratings_sorted);
+        return $pos_a - $pos_b;
+    });
+
+    //after this $row is sorted by avg_rating ex. avg_rating 5 is on the top 
+
+========================================================================================================================================================================
+
+ARRAY SORT BY SPECIFIC ORDER (using array_multisort)
+
+    $col = array_column('column_name',$array);   //get specific column that you want to be sorted
+    array_multisort($col, SORT_ASC/SORT_DESC,$array); //use that column with SORT_ASC or SORT_DESC with $array
+
+========================================================================================================================================================================
+
+FUNCTION TO GET MINUTE & SECONDS FROM SECONDS ( EX. 138 -> 2:18 ) (JS)
+
+    function fmtMSS(s){
+        return(s-(s%=60))/60+(9<s?':':':0')+s
+    }   
+
+========================================================================================================================================================================
+
+JS FOREACH 
+
+    var arr = //your array
+    arr.forEach(function(entry) {
+        console.log(entry); // entry = your array values
+    });
+
+========================================================================================================================================================================
+
+COLLATION CHANGE QUERY
+    
+    ALTER TABLE restaurant CONVERT TO CHARACTER SET utf8 COLLATE utf8_general_ci
+
+========================================================================================================================================================================
+
+AES DECRYPT QUERY  
+
+    SELECT CONCAT(AES_DECRYPT(users.full_name,"'.$this->encrypt_key.'")) as doctor_name FROM table
+
+========================================================================================================================================================================
+
+AES ENCRYPT QUERY
+
+    INSERT INTO testtable VALUE(AES_ENCRYPT(full_name,"'.$this->encrypt_key.'"))
+
+========================================================================================================================================================================
+
+FUNCTION FOR TIME AGO (EX. 1 DAY AGO|1 MONTH AGO)
+
+    public function get_timeago( $ptime )
+    { 
+        $etime = time() - strtotime($ptime);
+
+        if( $etime < 1 )
+        {
+            return 'less than '.$etime.' second ago';
+        }
+
+        $a = array( 12 * 30 * 24 * 60 * 60  =>  'year',
+                    30 * 24 * 60 * 60       =>  'month',
+                    24 * 60 * 60            =>  'day',
+                    60 * 60             =>  'hour',
+                    60                  =>  'minute',
+                    1                   =>  'second'
+        );
+
+        foreach( $a as $secs => $str )
+        {
+            $d = $etime / $secs;
+
+            if( $d >= 1 )
+            {
+                $r = round( $d );
+                return  $r . ' ' . $str . ( $r > 1 ? 's' : '' ) . ' ago';
+            }
+        }
+    }
+
+========================================================================================================================================================================
+
+FUNCTION FOR TIME AGO WITH WEEKS (EX. 1 WEEK AGO)
+
+    public function time_elapsed_string($datetime, $full = false) {
+
+        $now = new DateTime;
+        $ago = new DateTime($datetime);
+        $diff = $now->diff($ago);
+    
+        $diff->w = floor($diff->d / 7);
+        $diff->d -= $diff->w * 7;
+    
+        $string = array(
+            'y' => 'year',
+            'm' => 'month',
+            'w' => 'week',
+            'd' => 'day',
+            'h' => 'hour',
+            'i' => 'minute',
+            's' => 'second',
+        );
+        foreach ($string as $k => &$v) {
+            if ($diff->$k) {
+                $v = $diff->$k . ' ' . $v . ($diff->$k > 1 ? 's' : '');
+            } else {
+                unset($string[$k]);
+            }
+        }
+    
+        if (!$full) $string = array_slice($string, 0, 1);
+        return $string ? implode(', ', $string) . ' ago' : 'just now';
+    }
+
+========================================================================================================================================================================
+
+VALIDATE CUSTOMER CARD 
+
+    function validate_customer_card($card_number = NULL){
+
+        if (isset($card_number) && $card_number != ''){
+
+            global $type;
+
+            $cardtype = array(
+
+                "visa"       => "/^4[0-9]{12}(?:[0-9]{3})?$/",
+
+                "mastercard" => "/^5[1-5][0-9]{14}$/",
+
+                "amex"       => "/^3[47][0-9]{13}$/",
+
+                "jcb"        => "/^(?:2131|1800|35\d{3})\d{11}$/",
+
+                "dinnerclub" => "/^3(?:0[0-5]|[68][0-9])[0-9]{11}$/",
+
+                "discover"   => "/^6(?:011|5[0-9]{2})[0-9]{12}$/",
+
+            );
+
+            if (preg_match($cardtype['visa'],$card_number)) {
+
+                return 'visa';
+
+            } else if (preg_match($cardtype['mastercard'],$card_number)) {
+
+                return 'mastercard';
+
+            } else if (preg_match($cardtype['dinnerclub'],$card_number)) {
+
+                return 'dinnerclub';
+
+            } else if (preg_match($cardtype['jcb'],$card_number)) {
+
+                return 'jcb';
+
+            } else if (preg_match($cardtype['amex'],$card_number)) {
+
+                return 'amex';
+
+            } else if (preg_match($cardtype['discover'],$card_number)) {
+
+                return 'discover';
+
+            } else {
+
+                return '';
+
+            }
+
+        }
+
+    }
+
+========================================================================================================================================================================
+
+VALIDATE EXPIRY DATE
+    
+    public function validate_expirydate($expiry_date = NULL){
+
+        $return = FALSE;
+
+        $expiry_date_array = explode('/',$expiry_date);
+
+        if (count($expiry_date_array) == 2) {
+
+            if (checkdate($expiry_date_array[0], '01' , $expiry_date_array[1])) {
+
+                $expiry_date_obj = DateTime::createFromFormat('d/m/Y H:i:s', "01/" . $expiry_date_array[0] . "/" .  $expiry_date_array[1]." 00:00:00");
+
+                $expiry_date_obj = new DateTime($expiry_date_obj->format("Y-m-t"));
+
+                $my_date = date('d/m/Y');
+
+                $today = DateTime::createFromFormat('d/m/Y H:i:s', $my_date ." 00:00:00");
+
+                if($expiry_date_obj >= $today){
+
+                    $return = TRUE;
+
+                }
+
+            }
+
+        }
+
+        return $return;
+
+    }
+
+========================================================================================================================================================================
+
+ENCRYPT CARD DETAILS 
+
+    if(!function_exists('encrypt')){
+
+        function encrypt($string){
+
+            $CI = &get_instance();
+
+            $key = $CI->config->item('custom_encryption_key');
+
+            $result = '';
+
+            for($i=0, $k= strlen($string); $i<$k; $i++) {
+
+                $char = substr($string, $i, 1);
+
+                $keychar = substr($key, ($i % strlen($key))-1, 1);
+
+                $char = chr(ord($char)+ord($keychar));
+
+                $result .= $char;
+
+            }
+
+            return base64_encode($result);
+
+        }
+
+    }
+
+DECRYPT CARD DETAILS 
+
+    if(!function_exists('decrypt')){
+
+        function decrypt($string) {
+
+            //print_r($string);exit;
+
+            $CI=& get_instance(); 
+
+            $key = $CI->config->item('custom_encryption_key');
+
+            $result = '';
+
+            $string = base64_decode($string);
+
+            for($i=0,$k=strlen($string); $i< $k ; $i++) 
+
+            {
+
+                $char = substr($string, $i, 1);
+
+                $keychar = substr($key, ($i % strlen($key))-1, 1);
+
+                $char = chr(ord($char)-ord($keychar));
+
+                $result.=$char;
+
+            }
+
+            return $result;   
+
+        }
+
+    }
+
+========================================================================================================================================================================
+
+CHECK TYPE
+
+    function check_type($url){
+
+		$extension = pathinfo($url)['extension'];
+		$allowedExts = array("jpeg", "jpg", "png", "JPG", "JPEG", "PNG");
+
+		if(in_array($extension, $allowedExts)) {
+			return TRUE;
+		}else{
+			return FALSE;
+		}
+	}
+
+========================================================================================================================================================================
+
+GET DAY NAME
+
+    function get_day_name($timestamp) {
+
+        $date = date('d/m/Y', $timestamp);
+
+        if($date == date('d/m/Y')) {
+
+          $return_date = 'Today at '. date('h:i A', $timestamp);
+
+        } else if($date == date('d/m/Y',now() - (24 * 60 * 60))) {
+
+          $return_date = 'Yesterday at '. date('h:i A', $timestamp);
+
+        } else {
+
+            $return_date = date('d/m/Y h:i A', $timestamp);
+
+        }
+
+        return $return_date;
+
+    }
+
+========================================================================================================================================================================
+
+GET WORDS FROM NUMBER
+
+    function numberTowords($num)
+	{
+
+		$ones = array(
+			0 =>"ZERO",
+			1 => "ONE",
+			2 => "TWO",
+			3 => "THREE",
+			4 => "FOUR",
+			5 => "FIVE",
+			6 => "SIX",
+			7 => "SEVEN",
+			8 => "EIGHT",
+			9 => "NINE",
+			10 => "TEN",
+			11 => "ELEVEN",
+			12 => "TWELVE",
+			13 => "THIRTEEN",
+			14 => "FOURTEEN",
+			15 => "FIFTEEN",
+			16 => "SIXTEEN",
+			17 => "SEVENTEEN",
+			18 => "EIGHTEEN",
+			19 => "NINETEEN",
+			"014" => "FOURTEEN"
+		);
+		$tens = array( 
+			0 => "ZERO",
+			1 => "TEN",
+			2 => "TWENTY",
+			3 => "THIRTY", 
+			4 => "FORTY", 
+			5 => "FIFTY", 
+			6 => "SIXTY", 
+			7 => "SEVENTY", 
+			8 => "EIGHTY", 
+			9 => "NINETY" 
+		); 
+		$hundreds = array( 
+		"HUNDRED", 
+		"THOUSAND", 
+		"MILLION", 
+		"BILLION", 
+		"TRILLION", 
+		"QUARDRILLION" 
+		); /*limit t quadrillion */
+		$num = number_format($num,2,".",","); 
+		$num_arr = explode(".",$num); 
+		$wholenum = $num_arr[0]; 
+		$decnum = $num_arr[1]; 
+		$whole_arr = array_reverse(explode(",",$wholenum)); 
+		krsort($whole_arr,1); 
+		$rettxt = ""; 
+		foreach($whole_arr as $key => $i){
+			
+			while(substr($i,0,1)=="0")
+			$i=substr($i,1,5);
+			if($i < 20){ 
+				/* echo "getting:".$i; */
+				$rettxt .= $ones[$i]; 
+			}elseif($i < 100){ 
+				if(substr($i,0,1)!="0")  $rettxt .= $tens[substr($i,0,1)]; 
+				if(substr($i,1,1)!="0") $rettxt .= " ".$ones[substr($i,1,1)]; 
+			}else{ 
+				if(substr($i,0,1)!="0") $rettxt .= $ones[substr($i,0,1)]." ".$hundreds[0]; 
+				if(substr($i,1,1)!="0")$rettxt .= " ".$tens[substr($i,1,1)]; 
+				if(substr($i,2,1)!="0")$rettxt .= " ".$ones[substr($i,2,1)]; 
+			} 
+			if($key > 0){ 
+				$rettxt .= " ".$hundreds[$key]." "; 
+			}
+		} 
+		if($decnum > 0){
+			$rettxt .= " and ";
+			if($decnum < 20){
+				$rettxt .= $ones[$decnum];
+			}elseif($decnum < 100){
+				$rettxt .= $tens[substr($decnum,0,1)];
+				$rettxt .= " ".$ones[substr($decnum,1,1)];
+			}
+		}
+		return $rettxt;
+	}
+
+========================================================================================================================================================================
+
+VIDEO PREVIEW 
+
+    <input type="file" name="video" class="filestyle video" data-buttonname="btn-secondary" id="video" data-parsley-errors-container="#video-error">
+
+    // preview video tag
+    <video width="460" height="240" controls id="showVd" style="display: none;" class="mt-3">
+        <source src="" type="video/mp4">
+    </video>
+
+    $("#video").change(function(event) {
+        var files = event.target.files
+        var filename = files[0].name
+        var extension = files[0].type
+        console.log("files : " + files);
+        console.log("filename :" + filename);
+        console.log("extension :" + extension);
+        if (extension == 'video/mp4' || extension == 'video/mp4' || extension == 'video/wma') {
+            readVdURL(this);
+            //$('#view_video').hide();
+            $('#showVd').show();
+        } else {}
+    });
+
+    function readVdURL(input) {
+        if (input.files && input.files[0]) {
+            var reader = new FileReader();
+            reader.onload = function(e) {
+                $('#showVd').attr('src', e.target.result);
+            }
+            reader.readAsDataURL(input.files[0]);
+        }
+    }
+
+========================================================================================================================================================================
+
+IMAGE PREVIEW
+
+    <img src="'.$image.'" class="border rounded" height="150" alt="User avatar" id="user_profile_img"  >
+
+    $("#profile_picture").change(function(){
+        readURL(this,'#user_profile_img');
+    });
+
+    function readURL(input, preview_field) {
+
+        if (input.files && input.files[0]) {
+
+            var reader = new FileReader();
+            reader.onload = function(e) {
+                $(preview_field).attr('src', e.target.result);
+            };
+
+            reader.readAsDataURL(input.files[0]);
+        }
+    }
+
+========================================================================================================================================================================
+
+IMAGE PREVIEW 2
+
+    $('#profile_image').on('change', function() {
+        imagesPreview(this, 'profile_image_preview');
+    });
+
+    var imagesPreview = function(input, previewId) {
+        if (input.files) {
+            var filesAmount = input.files.length;
+            var preview;
+            $('#'+previewId).html('');
+            for (i = 0; i < filesAmount; i++) {
+                var reader = new FileReader();
+                reader.onload = function(event) {
+                // console.log(event.target.result);
+                    preview = '<div style="margin-right:10px;margin-bottom:10px;"><img style="height: 110px;width: 110" src="'+event.target.result+'"  ></div>';
+                    $('#'+previewId).append(preview);       
+                }
+
+                reader.readAsDataURL(input.files[i]);
+            }
+        }
+    };
+
+========================================================================================================================================================================
+
+IMAGE PREVIEW ON CLICK (click on image)
+
+    HTML - //put this in column value , $category = image url/path
+    
+    <a data-lightbox="order_img_'.$row['id'].'" href="'.base_url($category).'" title="Preview Image"><img src="'.base_url($category).'" alt="no image" class="border border-secondary" style="height: 36px; width: 36px; object-fit: cover;"></a>
+
+    // for js and css download lightbox plugin
+
+========================================================================================================================================================================
+
+REMOTE VALIDATION JQUERY
+
+    // write below code in jquery validation
+    MobileNo:{
+        required : true,
+        minlength:10,
+        maxlength:10, 
+        number: true,
+        remote : {
+            url:  BASE_URL+"website/Register/check_duplicate_data",
+            type: "post",
+            data :{
+                'table_name': 'Passenger',
+                'field_name' : 'MobileNo'                                              
+            }
+        } 
+    },
+
+    Email: {
+        required: true,
+        email: true,
+        remote : {
+            url: BASE_URL+"website/Register/check_duplicate_data",
+            type: "post",
+            data :{
+                'table_name': 'Passenger',
+                'field_name' : 'Email'                                              
+            }
+        }         
+    },
+
+    // below code in controller
+    public function check_duplicate_data(){
+
+        if(isset($_POST['old_value']))
+        {
+            $old_value = strtolower($_POST['old_value']);    
+        }        
+        $new_value = strtolower($_POST[$_POST['field_name']]);
+        $field_name = $_POST['field_name'];
+        $table_name = $_POST['table_name'];                
+        if(isset($old_value))
+        {
+            if($old_value == $new_value)
+            {
+                echo 'true';
+            }
+            else
+            {	
+                $results = $this->db->get_where($table_name, array($field_name => $new_value,'Trash' => 0))->num_rows();
+                if($results > 0)
+                {
+                    echo 'false';
+                }
+                else
+                {
+                    echo 'true';
+                }
+            }
+        }
+        else
+        {      
+            $results = $this->db->get_where($table_name,array($field_name => $new_value,'Trash' => 0))->num_rows();      
+            
+            if($results > 0)
+            {
+                echo 'false';
+            }
+            else
+            {
+                echo 'true';
+            }
+        }
+        exit();  
+    }
+
+========================================================================================================================================================================
+
+VALIDATE FOR ONLY NUMBER (FOR INPUT TYPE)
+
+    // event in input type
+    onkeypress='return validateNumberFront(event)'
+
+    function validateNumberFront(event)
+    {
+        var key = window.event ? event.keyCode : event.which;
+        if (key == 8 || key == 37 || key == 39) {
+            return true;
+        }
+        else if ( key < 48 || key > 57 ) {
+            return false;
+        }
+        else return true;
+    }
+
+========================================================================================================================================================================
+
+COMPRESS IMAGE
+
+    function compress_image($source_url, $destination_url, $quality) {
+
+        $info = getimagesize($source_url);
+
+        if ($info['mime'] == 'image/jpeg')
+
+            $image = imagecreatefromjpeg($source_url);
+
+
+
+        elseif ($info['mime'] == 'image/gif')
+
+            $image = imagecreatefromgif($source_url);
+
+
+
+        elseif ($info['mime'] == 'image/png')
+
+            $image = imagecreatefrompng($source_url);
+
+
+
+        $is_image_create = imagejpeg($image, $destination_url, $quality);
+
+        return $destination_url;
+
+    }
+
+========================================================================================================================================================================
+
+PAYPAL GET TOKEN 
+
+    function get_token(){
+
+		$ch = curl_init();
+
+        curl_setopt($ch, CURLOPT_URL, 'https://api-m.sandbox.paypal.com/v1/oauth2/token');
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+        curl_setopt($ch, CURLOPT_POST, 1);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, "grant_type=client_credentials");
+        curl_setopt($ch, CURLOPT_USERPWD,  CLIENT_ID. ':' .SECRET );    // CLIENT_ID & SECRET needed (From Client/User's PAYPAL Account)
+
+        $headers = array();
+        $headers[] = 'Accept: application/json';
+        $headers[] = 'Accept-Language: en_US';
+        $headers[] = 'Content-Type: application/x-www-form-urlencoded';
+        curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+
+        $result = curl_exec($ch);
+        if (curl_errno($ch)) {
+            echo 'Error:' . curl_error($ch);
+        }
+        curl_close($ch);
+        return json_decode($result,true)['access_token'];
+	}
+
+========================================================================================================================================================================
+
+PAYPAL PAYOUT (SINGLE USER)
+
+    function payout($email,$amount,$token)
+	{
+        $batch_id = "batch-".time()."";
+		$curl = curl_init();
+
+        curl_setopt_array($curl, array(
+            CURLOPT_URL => "https://api.sandbox.paypal.com/v1/payments/payouts",
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_ENCODING => "",
+            CURLOPT_MAXREDIRS => 10,
+            CURLOPT_TIMEOUT => 30,
+            CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+            CURLOPT_CUSTOMREQUEST => "POST",
+            CURLOPT_POSTFIELDS => '{
+                            "sender_batch_header": {
+                              "email_subject": "You have a payment",
+                              "sender_batch_id": "'.$batch_id.'"
+                            },
+                            "items": [
+                              {
+                                "recipient_type": "EMAIL",
+                                "amount": {
+                                  "value": "'.$amount.'",
+                                  "currency": "USD"
+                                },
+                                "receiver": "'.$email.'",
+                                "note": "Payouts sample transaction"
+                              }
+                            ]
+                          }',
+            CURLOPT_HTTPHEADER => array(
+                'accept: application/json',
+                'authorization: Bearer '.$token,
+                'content-type: application/json'
+            ),
+        ));
+
+        $response = curl_exec($curl);
+        $err = curl_error($curl);
+
+        curl_close($curl);
+
+        if ($err) {
+        	$return['response'] = $err;
+        	$return['batch_id'] = $batch_id;
+            // echo "cURL Error #:" . $err;
+        } else {
+        	$return['response'] = $response;
+        	$return['batch_id'] = $batch_id;
+            // echo $response;
+        }
+
+        return $return;
+	}
+
+========================================================================================================================================================================
+
+PAYPAL PAYOUT BULK
+
+    function payout_bulk($items,$token)
+    {
+        $batch_id = "batch-".time()."";
+        $curl = curl_init();
+
+        curl_setopt_array($curl, array(
+            CURLOPT_URL => "https://api.sandbox.paypal.com/v1/payments/payouts",
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_ENCODING => "",
+            CURLOPT_MAXREDIRS => 10,
+            CURLOPT_TIMEOUT => 30,
+            CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+            CURLOPT_CUSTOMREQUEST => "POST",
+            CURLOPT_POSTFIELDS => '{
+                            "sender_batch_header": {
+                              "email_subject": "You have a payment",
+                              "sender_batch_id": "'.$batch_id.'"
+                            },
+                            "items": '.$items.'
+                          }',
+            CURLOPT_HTTPHEADER => array(
+                'accept: application/json',
+                'authorization: Bearer '.$token,
+                'content-type: application/json'
+            ),
+        ));
+
+        $response = curl_exec($curl);
+        $err = curl_error($curl);
+
+        curl_close($curl);
+
+        if ($err) {
+            $return['response'] = $err;
+            $return['batch_id'] = $batch_id;
+            // echo "cURL Error #:" . $err;
+        } else {
+            $return['response'] = $response;
+            $return['batch_id'] = $batch_id;
+            // echo $response;
+        }
+
+        return $return;
+    }
+
+========================================================================================================================================================================
+
+PAYOUT GET PAYOUT DETAILS 
+
+    function payment_status($payout_id,$token){
+        // Generated by curl-to-PHP: http://incarnate.github.io/curl-to-php/
+        $ch = curl_init();
+
+        curl_setopt($ch, CURLOPT_URL, 'https://api-m.sandbox.paypal.com/v1/payments/payouts/'.$payout_id);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+        curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'GET');
+
+
+        $headers = array();
+        $headers[] = 'Content-Type: application/json';
+        $headers[] = 'Authorization: Bearer '.$token;
+        curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+
+        $result = curl_exec($ch);
+        if (curl_errno($ch)) {
+            echo 'Error:' . curl_error($ch);
+        }
+        curl_close($ch);
+
+        return $result;
+    }
+
+========================================================================================================================================================================
+
+PAYPAL GET ITEM DETAILS
+
+    function payout_item_details($payout_item_id,$token){
+
+        $ch = curl_init();
+
+        curl_setopt($ch, CURLOPT_URL, 'https://api-m.sandbox.paypal.com/v1/payments/payouts-item/'.$payout_item_id);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+        curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'GET');
+
+
+        $headers = array();
+        $headers[] = 'Content-Type: application/json';
+        $headers[] = 'Authorization: Bearer '.$token;
+        curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+
+        $result = curl_exec($ch);
+        if (curl_errno($ch)) {
+            echo 'Error:' . curl_error($ch);
+        }
+        curl_close($ch);
+
+        return $result;
+    }
+
+========================================================================================================================================================================
+
+SEND MAIL
+
+    function sendEmail($subject = '', $to = '', $message = '') {
+
+        $CI = &get_instance();
+
+		$config['protocol'] = "smtp";
+        $config['smtp_host'] = "ssl://smtp.gmail.com";
+        $config['smtp_port'] = "465";
+        $config['smtp_user'] = $CI->config->item('smtp_user');
+        $config['smtp_pass'] = $CI->config->item('smtp_pass');
+        $config['charset'] = "utf-8";
+        $config['mailtype'] = "html";
+        $config['newline'] = "\r\n";
+        //print_r($config);die();
+
+        $CI->email->initialize($config);
+
+        $CI->email->from($CI->config->item('from'), SITENAME);
+
+        $CI->email->to($to);
+
+        $CI->email->subject($subject);
+
+        $CI->email->message($message);
+
+        //print_r($CI->email->send());die();
+
+
+        if ($CI->email->send()) {
+            return TRUE;
+
+        } else {
+
+        //$error = show_error($CI->email->print_debugger());
+        //die();
+        //return $error;
+        return FALSE;
+        }
+    }
+
+========================================================================================================================================================================
+
+SEND PUSH
+
+    function send_push($user_id = '', $user_type = '', $push_title = '', $push_message = '', $message_type = '', $extra_param = []) {
+        
+        $ci = & get_instance();
+
+        if ($user_id != '' && $user_type != '') {
+
+            $ci->db->select(array('device_type', 'device_token'));
+
+            $row = (array) $ci->db->get_where($user_type, array('id' => $user_id))->row();
+                
+                $key = $ci->config->item('fcm_key');
+
+                $token = $row['device_token'];
+
+                if ($row['device_type'] == IOS_DEVICE) {
+
+                    $fcmFields = array(
+                        'priority' => 'high',
+                        'to'       => $token,
+                        'notification'  => array(
+                            "title"     => $push_title,
+                            "body"      => $push_message,
+                            "type"      => $message_type,
+                        ),
+                    );
+                    if($message_type == 'logout' || $message_type == 'profile_approved') {
+                        $fcmFields['notification']['content-available'] = 1;
+                        $fcmFields['notification']['apns-priority'] = 5;
+                    }
+                } else {
+                   
+                    $fcmFields = array(
+                        'priority' => 'high',
+                        'to'       => $token,
+                        'data' => array(
+                            "type" => $message_type,                            
+                            "title"     => $push_title,
+                            "body"      => $push_message,
+                            'response'  => $extra_param,
+                            'sound'    => 'default',
+                        )
+                    );
+                }
+
+            $headers = array('Authorization: key=' . $key, 'Content-Type: application/json');
+
+            $ch = curl_init();
+
+            curl_setopt($ch, CURLOPT_URL, 'https://fcm.googleapis.com/fcm/send');
+
+            curl_setopt($ch, CURLOPT_POST, true);
+
+            curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+
+            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+
+            curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($fcmFields));
+
+            $result = curl_exec($ch);
+
+            curl_close($ch);
+        }
+    }
+    
+========================================================================================================================================================================
+
+SEND BULK PUSH
+
+    function send_bulk_push($tokens = '', $device_type = '', $push_title = '', $push_message = '', $message_type = '', $data = []) {
+
+        $ci = & get_instance();
+
+        if ($tokens != '' && $device_type != '') {
+
+            $key = $ci->config->item('fcm_key');
+
+            if ($device_type == 'android') {
+
+                $push_data = array(
+                    'body' => $push_message,
+                    'title' => $push_title,
+                    'sound' => "default",
+                    'data' => $data,
+                    'type' => $message_type
+                );
+                $fcmFields = array(
+                    'registration_ids' => $tokens,
+                    'priority' => 'high',
+                    'data' => $push_data,
+                );
+            } else {
+                $push_data = array(
+                    'body' => $push_message,
+                    'title' => $push_title,
+                    'sound' => "default",
+                    'data' => $data,
+                    'type' => $message_type
+                );
+                $fcmFields = array(
+                    'registration_ids' => $tokens,
+                    'priority' => 'high',
+                    'notification' => $push_data,
+                );
+            }
+
+            $headers = array('Authorization: key=' . $key, 'Content-Type: application/json');
+
+            $ch = curl_init();
+            curl_setopt($ch, CURLOPT_URL, 'https://fcm.googleapis.com/fcm/send');
+            curl_setopt($ch, CURLOPT_POST, true);
+            curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+            curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($fcmFields));
+            $result = curl_exec($ch);
+            curl_close($ch);
+            //   echo $result . "\n\n";die;
+        }
+    }
+
+========================================================================================================================================================================
+
+STRIPE PAYOUT
+
+    /* Add initial transaction : start*/
+    $transaction['user_id'] = $card_details['user_id'];
+    $transaction['amount']  = $request['amount'];
+    $transaction['card_id'] = $request['card_id'];
+    $transaction['status']  = 'pending';
+    $transaction['transaction_type'] = 'wallet';
+    $transaction['reference_id'] = '';
+    $transaction['description'] = 'Card payment to add wallet.';
+    $transaction['created_at'] = $current_date;
+
+    $last_transaction_id = $this->comman->insert_record('transactions',$transaction);
+    /* Add initial transaction : end*/
+
+    $strp_transaction['cost'] = $request['amount'] * 100;
+    $strp_transaction['purchase_id'] = $last_transaction_id;
+    $strp_transaction['credit_card_no'] = decrypt($card_details['card_number']);
+    $strp_transaction['security_code'] = decrypt($card_details['cvv']);
+    $strp_transaction['expiry_date'] = decrypt($card_details['expiry_date']);
+    $strp_transaction['Fullname'] = $card_details['card_holder_name'];
+    $strp_transaction['Description'] = 'Wallet for the ID :'.$booking_id;
+    $res = pay_stripe($strp_transaction);
+
+    function pay_stripe($card_info)
+    {
+        $CI =& get_instance();
+        $CI->load->library('Stripe');
+
+        $card_array['name'] = $card_info['Fullname'];
+        $card_array['card_number'] = $card_info['credit_card_no'];
+
+        $monthyear = explode('/',$card_info['expiry_date']);
+        //$month_array = array('Jan'=>'01','Feb'=>'02','Mar'=>'03','Apr'=>'04','May'=>'05','Jun'=>'06','Jul'=>'07','Aug'=>'08','Sep'=>'09','Oct'=>'10','Nov'=>'11','Dec'=>'12');
+        
+        $card_array['month'] = $monthyear[0];
+        $card_array['year'] = $monthyear[1];
+        $card_array['cvc_number'] = $card_info['security_code'];
+
+        $stripeCardObject=$CI->stripe->createToken($card_array);
+
+        if(isset($stripeCardObject['status']) && $stripeCardObject['status'] == true)
+        {            
+
+            $stripe_pay['amount'] = $card_info['cost'];
+            $stripe_pay['source'] = $stripeCardObject['token'];
+            $booking_id = 0;
+            if(isset($card_info['purchase_id']))
+            {
+                $booking_id = $card_info['purchase_id'];
+            }
+            $stripe_pay['description'] = $card_info['Description'];
+
+            $paymentResponse = $CI->stripe->addCharge($stripe_pay);
+            
+            if(isset($paymentResponse['status']) && $paymentResponse['status'] == true)
+            {
+                //print_r($paymentResponse['success']->balance_transaction);
+                //print_r($paymentResponse['success']->id);exit;
+                //$response['Status'] = $paymentResponse['status'];
+                $response['Status'] = 'success';
+                $response['ReferenceId'] = $paymentResponse['success']->id;
+                $response['id'] = $paymentResponse['success']->id;
+                return $response;
+            }
+            else
+            {
+                $response['Status'] = 'failed';
+                $response['ReferenceId'] = 0;
+                //$response['id'] = $paymentResponse['success']->id;
+                return $response;
+            }
+        }
+        else
+        {
+            //print_r($stripeCardObject['error']);
+            $stripeCardObject['Status'] = $stripeCardObject['status'];
+            return $stripeCardObject;
+        }
+        exit;
+    } 
+
+========================================================================================================================================================================
+
+SCROLL UP/BOTTOM BUTTON
+
+HTML -  <button onclick="bottomFunction()" id="ToptoBottom" title="Go to Bottom"><i class="la la-angle-down"></i></button>
+        <button onclick="topFunction()" id="BottomtoTop" title="Go to Top"><i class="la la-angle-up"></i></button>
+
+CSS -   #ToptoBottom,#BottomtoTop {
+            display: none;
+            position: fixed;
+            /* bottom: 20px; */
+            right: 30px;
+            z-index: 99;
+            font-size: 18px;
+            border: none;
+            outline: none;
+            /* background-color: red; */
+            background-image: linear-gradient(#ad9fa4, #d0a191) !important;
+            transition: background-color .3s, opacity .5s, visibility .5s;
+            color: white;
+            cursor: pointer;
+            padding: 15px;
+            border-radius: 4px;
+        }
+        #BottomtoTop {
+            bottom: 20px !important;
+        }
+
+JS - 
+    var top_to_bottom = document.getElementById("ToptoBottom");
+    var bottom_to_top = document.getElementById("BottomtoTop");
+
+    $(window).scroll(function() {
+
+        // this is for top to botton scroll button
+        // When the user scrolls down 200px from the top of the document, show the button and when it reach 1500px hide the button
+        if (($(window).scrollTop() > 200 || $(window).scrollTop() > 200) && $(window).scrollTop() < 1500) {
+            top_to_bottom.style.display = "block";
+        } else {
+            top_to_bottom.style.display = "none";
+        }
+
+        // this is for bottom to top scroll button
+        // When the user scrolls down > 1500px from the top of the document, show the button and when it scroll < 1500px hide the button
+        if (($(window).scrollTop() > 1500)) {
+            bottom_to_top.style.display = "block";
+        } else {
+            bottom_to_top.style.display = "none";
+        }
+
+    });
+
+    function bottomFunction() {
+        
+        $('html, body').animate({
+            scrollTop: $(document).height()
+        }, 'slow');
+        return false;
+    }
+
+    function topFunction() {
+       
+        $('html, body').animate({
+            scrollTop:0
+        }, 'slow');
+        return false;
+    }
+
+========================================================================================================================================================================
+
