@@ -1,110 +1,307 @@
 <style type="text/css">
-    .user_div{display: none;}
-    .select2-container{width: 100% !important;}
-    .select2-search__field{ margin-top: 0 !important;}
-    .user_div .select2-container--default .select2-selection--multiple .select2-selection__choice{background-color: unset !important;border-color: #83626d!important;background-image: linear-gradient(#c6a7a2, #805f6a) !important; }
-    .vertical-layout .select2-container--default .select2-results__options .select2-results__option[aria-selected=true] {
-        background-image: linear-gradient(#c6a7a2, #805f6a) !important;
-    }
+    .lable{margin-left: 1%;}
 </style>
 <div class="row justify-content-center">
     <div class="col-lg-8">
         <div class="card">
             <div class="card-content collapse show">
                 <div class="card-body card-dashboard">
-                	<form action="" method="post" name="send_notification" enctype="multipart/form-data" autocomplete="off">
-                		<div class="row">
-                    		<div class="col-12">
-                    			<div class="form-group">
-                    				<label>User Types</label>
-	                                <select class="form-control" name="user_type" id="user_type" required>
-	                                	<option value="">Select</option>
-	                                	<option value="customer">Customer</option>
-										<option value="service_provider">Service Provider</option>
-										<option value="all">All</option>
-									</select>
-								</div>
-                            </div>
-                    	</div>
+                    <div class="alert popup-alert alert-dismissible d-none">
+                        <button type="button" class="close" data-dismiss="alert" aria-hidden="true" style="line-height: 0.7;"></button>
+                    </div>
+                    <form action="" method="post" name="add_promocode" id="add_promocode" enctype="multipart/form-data" autocomplete="off">
 
                         <div class="row">
-                            <div class="col-12">
-                                <div class="form-group user_div">
-                                    <label>User Names</label>
-                                    <select class="form-control select2 col-lg-12" data-parsley-errors-container="#validation-patient-error-label" data-placeholder="Select" id='user_name' name="users[]" multiple="multiple">
-                                    </select>
-                                    <span id="validation-patient-error-label"></span>
+                            <div class="col-lg-12">
+                               <div class="form-group form-inline">
+                                    <fieldset style="margin-right:3%;">
+                                        <div class="custom-control custom-radio">
+                                            <input type="radio" class="custom-control-input promocode_for" name="promocode_for" id="default" checked="" value="customer">
+                                            <label class="custom-control-label" for="default" >DEFAULT</label>
+                                        </div>
+                                    </fieldset>
+                                    <fieldset >
+                                        <div class="custom-control custom-radio">
+                                            <input type="radio" class="custom-control-input promocode_for" name="promocode_for" id="special_day" value="advisor">
+                                            <label class="custom-control-label" for="special_day">SPECIAL DAY</label>
+                                        </div>
+                                    </fieldset>
                                 </div>
                             </div>
                         </div>
-                		
-                    	<div class="row">
-                    		<div class="col-12">
-                    			<div class="form-group">
-                    				<label>Title</label>
-	                                <input type="text" name="title" class="form-control" required>
-								</div>
+
+                        <div class="row d-none" id="customer_div">
+                            <div class="col-lg-6">
+                                <div class="form-group">
+                                    <label for="question">Type</label>
+                                    <select class=" form-control" name="type_customer" id='type_customer' required data-placeholder="Select Type" required="">
+                                        <option value="">Select</option>
+                                        <option value="first_time">First Time</option>
+                                        <option value="birthday">Birthday</option>
+                                    </select>
+                                </div>
                             </div>
-                    	</div>
-                    	<div class="row">
-                    		<div class="col-12">
-                    			<div class="form-group">
-                    				<label>Description</label>
-	                                <textarea class="form-control" name="description" required></textarea>
-								</div>
+                            <div class="col-lg-6">
+                                <div class="form-group">
+                                    <label for="question">Offer Code</label>
+                                    <input type="text" class="form-control" name="promocode_customer" id="promocode" placeholder="Enter Offer Code" required=""> 
+                                </div>
                             </div>
-                    	</div>
-                    	<div class="form-group">
+                        </div>
+
+                        <div class="row d-none" id="discount">
+                            <div class="col-lg-6" id="customer_discount_type">
+                                <label>Discount Type</label>
+                                <select class=" form-control" name="discount_type_customer" id='discount_type_customer' required data-placeholder="Select Discount Type" required="">
+                                    <option value="">Select</option>
+                                    <option value="flat">Flat</option>
+                                    <option value="percentage">Percentage</option>
+                                </select>
+                            </div>
+                            <div class="col-lg-6">
+                                <div class="form-group">
+                                    <label for="question">Discount Value</label>
+                                    <input type="text" class="form-control" name="discount_value_customer" onkeypress="return validateNumber(event);" id="discount_value" placeholder="Enter Discount Value" required="">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row d-none" id="customer">
+                            <div class="col-lg-6">
+                                <div class="form-group">
+                                    <label for="question">Free Minute</label>
+                                    <input type="text" class="form-control" name="free_minute" id="free_minute" placeholder="Enter Free Minute" required="">
+                                </div>
+                            </div>
+                            <div class="col-lg-6">
+                                <div class="form-group">
+                                    <label for="question">Min Minute</label>
+                                    <input type="text" class="form-control" name="min_minute" id="min_minute" readonly="" placeholder="Enter Min Minute" required="">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row d-none advisor_div">
+                            <div class="col-lg-6">
+                                <div class="form-group">
+                                    <label for="question">Offer Code</label>
+                                    <input type="text" class="form-control" name="promocode_advisor" id="promocode" placeholder="Enter Offer Code" required=""> 
+                                </div>
+                            </div>
+                            <div class="col-lg-6">
+                                <div class="form-group">
+                                    <label for="answer">Select Special Day</label>
+                                    <input type="date" class="form-control" required="" name="special_day_date" id="datepicker" placeholder="Select Special Day" required="">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row  d-none advisor_div">
+                            <!-- <div class="col-lg-6">
+                                <div class="form-group">
+                                    <label for="answer">Discount Type</label>
+                                    <select class=" form-control" name="discount_type_advisor" id='discount_type_advisor' required data-placeholder="Select Discount Type" required="">
+                                        <option value="">Select</option>
+                                        <option value="flat">Flat</option>
+                                        <option value="percentage">Percentage</option>
+                                    </select>
+                                </div>
+                            </div> -->
+                            <input type="text" name="discount_type_advisor" value="percentage" hidden="">
+                            <div class="col-lg-6">
+                                <div class="form-group">
+                                    <label for="question">Discount Value</label>
+                                    <input type="text" class="form-control" name="discount_value_advisor" onkeypress="return validateNumber(event);" id="discount_value" placeholder="Enter Discount Value" required="">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
                             <div>
-                                <button type="submit" name="submit" class="btn waves-effect waves-light text-white btn-theme">
-                                    Send
+                                <button type="submit" name="submit" class="btn btn-theme waves-effect waves-light text-white" id="submit">
+                                    Submit
                                 </button>
-                               <!--  <a href="<?php echo base_url('admin/notification');?>" type="reset" class="btn-secondary waves-effect m-l-5">Cancel </a> -->
                                 <button type="reset" class="btn btn-secondary waves-effect m-l-5" id="reset">
                                     Cancel
                                 </button>
                             </div>
                         </div>
-                	</form>
+                    </form>
                 </div>
             </div>
         </div>
     </div>
 </div>
-<!-- <script src="<?php echo assets('js/bootstrap-filestyle.min.js');?>"></script> -->
-<!-- <script src="vendor/jquery-validation/dist/jquery.validate.min.js"></script> -->
 <script type="text/javascript">
-	$(document).ready(function() {
-    	$(".select2").select2();
-    }).on('change', '#user_type', function(){
-    		var user_type=$(this).val();
-            if($(this).val() =='customer' || $(this).val() =='service_provider'){
-                $('.user_div').show();
-                document.getElementById("user_name").required = true ;
-                $.ajax({
-                    url : "<?php echo base_url('admin/notification/dropdown');?>",
-                    method : "POST",
-                    data : {user_type: user_type},
-                    async : true,
-                    dataType : 'json',
-                    success: function(data){
-                        var html = '';
-                        var i;
-                        for(i=0; i<data.length; i++){
-                            html += '<option value='+data[i].id+'>'+data[i].full_name+'</option>';
-                        }
-                        $('#user_name').html(html);
- 
-                    }
-            });
-            return false;
-            }
-            if($(this).val() =='all' || $(this).val() ==''){
-                $('.user_div').hide();
-                document.getElementById("user_name").required = false ;
-            } 
-    	}).on('click', '#reset', function(){
-            window.location.href='<?php echo base_url('admin/notification');?>';
+    $(document).ready(()=> {
+        $('#add_promocode').parsley({ excluded: ":hidden"});
+        $('#reset').click(function(){
+            window.location.href='<?php echo base_url('admin/offers');?>';
         });
-	
+
+    });
+
+
+    if($('#type_customer').val() == ""){
+            $('#free_minute').blur(function(){
+                var val = $('#free_minute').val();
+                if(val != ''){
+                    $('#min_minute').prop('readonly', false).val('');
+                    $('#submit').prop('disabled', false);
+                }else{$('#min_minute').attr('readonly','readonly').val('');}
+            });
+
+            $('#min_minute').blur(function(){
+                var min_val = $('#min_minute').val();
+                var free_val = parseFloat($('#free_minute').val());
+                var required_val = parseFloat("<?php echo $this->config->item('promocode_required_min_val'); ?>");
+                var total = required_val + free_val;
+                    
+                if(min_val != ''){
+                    if(min_val >= total){
+                        $('#submit').prop('disabled', false);
+                    }else{
+                        $('#submit').prop('disabled', true);
+                        $('.popup-alert').addClass('alert-danger').removeClass('d-none').html("Min Minute value should be at least "+total);
+                        $(".popup-alert").fadeTo(2000, 500).slideUp(500, function(){
+                            $(".popup-alert").slideUp(500);
+                        });
+                    }
+                }else{$('#submit').prop('disabled', false);}    
+            });
+        }
+
+
+    $('.promocode_for').change(function(){
+            var id = $(this).val();
+            // console.log(id);
+            if(id == "customer"){
+
+                $('#customer').removeClass('d-none');
+                $('#customer_div').removeClass('d-none');
+                // $('#advisor_div').addClass('d-none');
+                $('.advisor_div').addClass('d-none');
+                if($('#type_customer').val() == 'birthday'){
+                    $('#discount').removeClass('d-none');
+                    $('#customer').addClass('d-none');
+                }
+
+            }else if(id == 'advisor'){
+                $('#discount').addClass('d-none');
+                $('#customer').addClass('d-none');
+                $('#customer_div').addClass('d-none');
+                // $('#advisor_div').removeClass('d-none');
+                $('.advisor_div').removeClass('d-none');
+                $('#submit').prop('disabled', false);
+                $('#min_minute').val('');
+            }else{
+               $('#customer').addClass('d-none');
+               $('#customer_div').addClass('d-none');
+               $('#advisor_div').addClass('d-none');
+               $('.advisor_div').addClass('d-none');
+            }
+        });
+
+        $('#type_customer').change(function(){
+            var val = $(this).val();
+            if(val == 'first_time'){
+                $('#customer').removeClass('d-none');
+                $('#customer_discount_type').addClass('d-none');
+                $('#discount').addClass('d-none');
+
+                $('#free_minute').blur(function(){
+                    var val = $('#free_minute').val();
+                    if(val != ''){
+                        $('#min_minute').prop('readonly', false).val('');
+                        $('#submit').prop('disabled', false);
+                    }else{$('#min_minute').attr('readonly','readonly').val('');}
+                });
+
+                $('#min_minute').blur(function(){
+                    var min_val = $('#min_minute').val();
+                    var free_val = parseFloat($('#free_minute').val());
+                    var required_val = parseFloat("<?php echo $this->config->item('promocode_required_min_val'); ?>");
+                    var total = required_val + free_val;
+                        
+                    if(min_val != ''){
+                        if(min_val >= total){
+                            $('#submit').prop('disabled', false);
+                        }else{
+                            $('#submit').prop('disabled', true);
+                            $('.popup-alert').addClass('alert-danger').removeClass('d-none').html("Min Minute value should be at least "+total);
+                            $(".popup-alert").fadeTo(2000, 500).slideUp(500, function(){
+                                $(".popup-alert").slideUp(500);
+                            });
+                        }
+                    }else{$('#submit').prop('disabled', false);}    
+                });
+
+            }else if(val == 'birthday'){
+                $('#customer').addClass('d-none');
+                $('#discount').removeClass('d-none');
+                $('#customer_discount_type').removeClass('d-none');
+                $('#submit').prop('disabled', false);
+            }else{
+                $('#customer_discount_type').addClass('d-none');
+
+                $('#free_minute').blur(function(){
+                    var val = $('#free_minute').val();
+                    if(val != ''){
+                        $('#min_minute').prop('readonly', false).val('');
+                        $('#submit').prop('disabled', false);
+                    }else{$('#min_minute').attr('readonly','readonly').val('');}
+                });
+
+                $('#min_minute').blur(function(){
+                    var min_val = $('#min_minute').val();
+                    var free_val = parseFloat($('#free_minute').val());
+                    var required_val = parseFloat("<?php echo $this->config->item('promocode_required_min_val'); ?>");
+                    var total = required_val + free_val;
+                        
+                    if(min_val != ''){
+                        if(min_val >= total){
+                            $('#submit').prop('disabled', false);
+                        }else{
+                            $('#submit').prop('disabled', true);
+                            $('.popup-alert').addClass('alert-danger').removeClass('d-none').html("Min Minute value should be at least "+total);
+                            $(".popup-alert").fadeTo(2000, 500).slideUp(500, function(){
+                                $(".popup-alert").slideUp(500);
+                            });
+                        }
+                    }else{$('#submit').prop('disabled', false);}    
+                });
+            }
+        });
+
+        var promocode_for =  $('.promocode_for').val();
+
+        if(promocode_for == 'customer'){
+
+            $('#customer').removeClass('d-none');
+            $('#customer_div').removeClass('d-none');
+            $('#advisor_div').addClass('d-none');
+            $('.advisor_div').addClass('d-none');
+
+
+        }else if(promocode_for == 'advisor'){
+
+            $('#customer').addClass('d-none');
+            $('#customer_div').addClass('d-none');
+            $('#advisor_div').removeClass('d-none');
+            $('.advisor_div').removeClass('d-none');
+            $('#submit').prop('disabled', false);
+            $('#min_minute').val('');
+        }
+
+        function validateNumber(event) 
+        {
+            var key = window.event ? event.keyCode : event.which;
+            if (key == 8 || key == 37 || key == 39) {
+                return true;
+            }
+            else if ( key < 48 || key > 57 ) {
+                return false;
+            }
+            else return true;
+        }
 </script>
